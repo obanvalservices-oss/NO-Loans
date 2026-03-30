@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+/* NO Loan — palette from brand icon: forest teal, mint, glow cyan, deep black */
+@theme inline {
+  --color-brand-50: #ecfdf5;
+  --color-brand-100: #d8f3dc;
+  --color-brand-200: #b7e4c7;
+  --color-brand-300: #95d5b2;
+  --color-brand-400: #74c69d;
+  --color-brand-500: #52b788;
+  --color-brand-600: #40916c;
+  --color-brand-700: #2d6a4f;
+  --color-brand-800: #1b4332;
+  --color-brand-900: #142824;
+  --color-brand-950: #0a0f0d;
+  --color-glow: #7de2d1;
+  --color-glow-bright: #95f5e5;
+}
+
+:root {
+  --background: var(--color-brand-950);
+  --foreground: var(--color-brand-100);
+  --card: rgba(20, 40, 36, 0.55);
+  --border: rgba(255, 255, 255, 0.08);
+  --accent: var(--color-brand-500);
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.bg-app {
+  background-color: var(--color-brand-950);
+  background-image:
+    radial-gradient(
+      ellipse 100% 70% at 50% -25%,
+      rgb(82 183 136 / 0.14),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 100% 0%,
+      rgb(125 226 209 / 0.08),
+      transparent 42%
+    );
+}
+
+.bg-dot {
+  background-image: radial-gradient(
+    rgb(82 183 136 / 0.11) 1px,
+    transparent 1px
+  );
+  background-size: 22px 22px;
+}
+
+.stat-grid > * {
+  animation: fade-in-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.stat-grid > *:nth-child(1) {
+  animation-delay: 0.04s;
+}
+.stat-grid > *:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.stat-grid > *:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.stat-grid > *:nth-child(4) {
+  animation-delay: 0.22s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stat-grid > * {
+    animation: none !important;
+  }
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+@media print {
+  html {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  body {
+    background: white !important;
+    background-image: none !important;
+    color: #0f172a !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .bg-app,
+  .bg-dot {
+    background-image: none !important;
+    background-color: white !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

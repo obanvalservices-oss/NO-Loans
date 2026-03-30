@@ -1,0 +1,176 @@
+/* Loaded only for /reports/weekly — US Letter landscape, no clipped currency */
+
+@media print {
+  /* 11" × 8.5" landscape; margins leave a normal printable area */
+  @page {
+    size: letter landscape;
+    margin: 0.4in;
+  }
+
+  /*
+   * App shell uses flex + min-h-screen + Framer wrapper. In print that often
+   * behaves like a fixed-height box and clips everything after the first
+   * viewport — last farms / totals look cut off. Un-constrain for print.
+   */
+  html {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  body {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  body > div.flex.min-h-screen,
+  body > div.flex.min-h-screen > div {
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  main {
+    flex: none !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  /* Framer Motion sets inline transform/opacity — can clip or shrink print */
+  main > div.max-w-6xl,
+  main > div.max-w-6xl > div {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    transform: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+  }
+
+  /*
+   * DataTableShell uses overflow-hidden + inner overflow-x-auto. In print that
+   * clips rows past the first “page” of the scroll box — rows look missing.
+   * Force visible overflow so every selected row prints (may span multiple sheets).
+   */
+  .weekly-print-root {
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .weekly-print-sheet {
+    overflow: visible !important;
+    line-height: 1.25;
+    max-width: 100%;
+    max-height: none !important;
+    height: auto !important;
+  }
+
+  .weekly-print-table-wrap {
+    overflow: visible !important;
+    break-inside: auto;
+    width: 100%;
+  }
+
+  .weekly-print-table-wrap > div {
+    overflow: visible !important;
+    max-height: none !important;
+    width: 100%;
+  }
+
+  .weekly-print-table-wrap table {
+    /* auto lets columns size to content + use full page width */
+    table-layout: auto;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-collapse: collapse;
+  }
+
+  .weekly-print-table th:nth-child(1),
+  .weekly-print-table td:nth-child(1) {
+    width: 24%;
+  }
+
+  .weekly-print-table th:nth-child(2),
+  .weekly-print-table td:nth-child(2) {
+    width: auto;
+  }
+
+  .weekly-print-table th:nth-child(3),
+  .weekly-print-table td:nth-child(3) {
+    width: 1.35in;
+    min-width: 1.35in;
+  }
+
+  /* UI Th uses whitespace-nowrap — narrow cols truncate “Discount” to “DISCOU” */
+  .weekly-print-table-wrap th,
+  .weekly-print-table-wrap td {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    word-break: break-word;
+  }
+
+  .weekly-print-table-wrap th {
+    white-space: normal !important;
+  }
+
+  /* Currency: one line, full value visible */
+  .weekly-print-table td.weekly-print-amount,
+  .weekly-print-table th.weekly-print-amount {
+    white-space: nowrap !important;
+    overflow: visible !important;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .weekly-print-table-wrap .weekly-print-table th,
+  .weekly-print-table-wrap .weekly-print-table td {
+    padding: 3px 6px !important;
+    font-size: 8pt !important;
+    line-height: 1.25 !important;
+  }
+
+  .weekly-print-table-wrap th {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+  }
+
+  /*
+   * Do NOT use break-inside:avoid on every row — WebKit/Chrome can clip the
+   * tail of a long table instead of flowing to the next sheet.
+   */
+  .weekly-print-table tbody tr {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .weekly-print-table {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  /* Grand total strip: don’t clip large amounts */
+  .weekly-print-sheet .weekly-print-grand-total {
+    overflow: visible !important;
+  }
+
+  .weekly-print-sheet .weekly-print-grand-total span {
+    overflow: visible !important;
+    white-space: nowrap !important;
+  }
+}

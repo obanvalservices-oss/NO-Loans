@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Company {
+  id            Int                 @id @default(autoincrement())
+  name          String
+  address_line  String              @default("")
+  phone         String              @default("")
+  header_note   String              @default("")
+  owner_name    String              @default("")
+  employees     Employee[]
+  loans         Loan[]
+  company_farms CompanyFarm[]
+  approvers     CompanyApprover[]
+  user_access   UserCompanyAccess[]
+
+  @@map("companies")
+}
+
+model Employee {
+  id         Int     @id @default(autoincrement())
+  company_id Int
+  company    Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  full_name  String
+  email      String  @default("")
+  phone      String  @default("")
+  id_number  String  @default("")
+  loans      Loan[]
+
+  @@map("employees")
+}
+
+model Loan {
+  id                           Int           @id @default(autoincrement())
+  company_id                   Int
+  employee_id                  Int
+  principal_cents              Int
+  annual_interest_rate_percent Float
+  term_weeks                   Int
+  start_date                   String
+  total_owed_cents             Int
+  weekly_payment_cents         Int
+  status                       String        @default("active")
+  created_at                   DateTime      @default(now())
+  notes                        String        @default("")
+  farm                         String        @default("")
+  approved_by                  String        @default("")
+  company                      Company       @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  employee                     Employee      @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+  installments                 Installment[]
+
+  @@index([employee_id])
+  @@map("loans")
+}
+
+model Installment {
+  id                Int    @id @default(autoincrement())
+  loan_id           Int
+  sequence          Int
+  due_date          String
+  amount_due_cents  Int
+  amount_paid_cents Int    @default(0)
+  status            String @default("pending")
+  loan              Loan   @relation(fields: [loan_id], references: [id], onDelete: Cascade)
+
+  @@index([loan_id])
+  @@map("installments")
+}
+
+model CompanyFarm {
+  id         Int     @id @default(autoincrement())
+  company_id Int
+  name       String
+  company    Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
+
+  @@unique([company_id, name])
+  @@index([company_id])
+  @@map("company_farms")
+}
+
+model CompanyApprover {
+  id         Int     @id @default(autoincrement())
+  company_id Int
+  name       String
+  company    Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
+
+  @@unique([company_id, name])
+  @@index([company_id])
+  @@map("company_approvers")
+}
+
+enum UserRole {
+  admin
+  user
+}
+
+model User {
+  id             Int                 @id @default(autoincrement())
+  email          String              @unique
+  password_hash  String
+  role           UserRole
+  company_access UserCompanyAccess[]
+  permissions    UserPermission?
+
+  @@map("users")
+}
+
+model UserCompanyAccess {
+  user_id    Int
+  company_id Int
+  user       User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  company    Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, company_id])
+  @@index([user_id])
+  @@map("user_company_access")
+}
+
+model SystemSetting {
+  key   String @id
+  value String
+
+  @@map("system_settings")
+}
+
+model UserPermission {
+  user_id                  Int     @id
+  user                     User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  can_manage_loans         Boolean @default(true)
+  can_manage_employees     Boolean @default(true)
+  can_edit_companies       Boolean @default(true)
+  can_view_weekly_report   Boolean @default(true)
+  can_print_contracts      Boolean @default(true)
+
+  @@map("user_permissions")
+}

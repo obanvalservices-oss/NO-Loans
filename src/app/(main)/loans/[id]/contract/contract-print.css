@@ -1,0 +1,52 @@
+/* One-page letter (8.5×11) — compact body text */
+.contract-letter {
+  max-width: 8.5in;
+  margin-left: auto;
+  margin-right: auto;
+  color: #111827;
+}
+
+.contract-letter p {
+  text-align: justify;
+  hyphens: auto;
+}
+
+@media print {
+  @page {
+    size: letter;
+    margin: 0.55in 0.65in;
+  }
+
+  body {
+    background: white !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .contract-letter {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 11pt !important;
+    line-height: 1.35 !important;
+  }
+
+  .contract-letter .contract-head {
+    margin-bottom: 0.75rem !important;
+  }
+
+  .contract-letter .contract-meta {
+    margin-bottom: 1rem !important;
+  }
+
+  .contract-letter p {
+    margin-bottom: 0.65rem !important;
+    font-size: 11pt !important;
+    line-height: 1.35 !important;
+  }
+
+  .contract-letter .contract-sign {
+    margin-top: 2rem !important;
+    padding-top: 0 !important;
+  }
+}
