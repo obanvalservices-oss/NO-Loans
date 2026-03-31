@@ -11,12 +11,11 @@ import { requireCompanyScope, requireSession } from "@/lib/require-auth";
 import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,
-  ArrowRight,
   Banknote,
   Building2,
   CalendarClock,
+  ChevronDown,
   ClockAlert,
-  PlusCircle,
   PiggyBank,
   TrendingDown,
   Users,
@@ -49,13 +48,11 @@ export default async function DashboardPage({ searchParams }: Props) {
     {
       href: "/companies",
       title: "Companies",
-      desc: "Edit headers & contract branding",
       icon: Building2,
     },
     {
       href: "/employees",
       title: "Employees",
-      desc: "Borrower profiles",
       icon: Users,
     },
     ...(perms.canManageLoans
@@ -63,7 +60,6 @@ export default async function DashboardPage({ searchParams }: Props) {
           {
             href: "/loans/new",
             title: "New loan",
-            desc: "Create schedule & terms",
             icon: Banknote,
           },
         ]
@@ -72,10 +68,29 @@ export default async function DashboardPage({ searchParams }: Props) {
 
   return (
     <div className="space-y-10">
-      <PageHeader
-        title="Dashboard"
-        description="Overview of principal, outstanding balances, and loan activity across your portfolio."
-      />
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <PageHeader
+          title="Dashboard"
+          description="Overview of principal, outstanding balances, and loan activity across your portfolio."
+        />
+        <section className="rounded-xl border border-white/10 bg-brand-950/30 p-2">
+          <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+            Quick actions
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {quickActions.map(({ href, title, icon: Icon }) => (
+              <Link
+                key={href}
+                href={href}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-brand-900/40 px-3 py-1.5 text-xs font-medium text-zinc-100 transition hover:border-brand-400/30 hover:bg-brand-900/70"
+              >
+                <Icon className="h-3.5 w-3.5 text-brand-300" />
+                {title}
+              </Link>
+            ))}
+          </div>
+        </section>
+      </div>
 
       <Card>
         <CardContent className="p-5">
@@ -131,58 +146,6 @@ export default async function DashboardPage({ searchParams }: Props) {
           hint="Fully paid"
         />
       </div>
-
-      <section>
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">
-          Quick actions
-        </h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {perms.canManageLoans ? (
-            <Link href="/loans/new" className="group block">
-              <Card className="h-full overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:border-brand-400/35 hover:shadow-lg hover:shadow-brand-500/10">
-                <CardContent className="flex flex-col gap-3 p-5">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/15 text-brand-300 ring-1 ring-brand-400/25">
-                    <PlusCircle className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <p className="font-semibold text-zinc-50">New loan</p>
-                    <p className="mt-0.5 text-sm text-zinc-500">Quick create</p>
-                  </div>
-                  <span className="mt-auto inline-flex items-center gap-1 text-sm font-medium text-brand-400">
-                    Open <ArrowRight className="h-4 w-4" />
-                  </span>
-                </CardContent>
-              </Card>
-            </Link>
-          ) : null}
-          {quickActions.map(({ href, title, desc, icon: Icon }) => (
-            <Link key={href} href={href} className="group block">
-              <Card className="h-full overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:border-brand-400/35 hover:shadow-lg hover:shadow-brand-500/10">
-                <CardContent className="flex flex-col gap-3 p-5">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/15 text-brand-300 ring-1 ring-brand-400/25 transition-transform duration-300 group-hover:scale-110 group-hover:bg-brand-500/25">
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <p className="font-semibold text-zinc-50">{title}</p>
-                    <p className="mt-0.5 text-sm text-zinc-500">{desc}</p>
-                  </div>
-                  <span className="mt-auto inline-flex items-center gap-1 text-sm font-medium text-brand-400 transition-colors group-hover:text-brand-300">
-                    Open
-                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-                  </span>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">
-          Quick payment register
-        </h2>
-        <QuickPaymentRegister rows={s.quickLoans} />
-      </section>
 
       <section className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -265,6 +228,30 @@ export default async function DashboardPage({ searchParams }: Props) {
             </div>
           </CardContent>
         </Card>
+      </section>
+
+      <section>
+        <details className="group rounded-2xl border border-white/10 bg-brand-900/30">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 marker:hidden">
+            <div>
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-300">
+                Quick payment register
+              </h2>
+              <p className="text-xs text-zinc-500">
+                Expand to record payments quickly for active loans.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-brand-300">
+              <span className="text-xs font-semibold uppercase tracking-wide">Expand</span>
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-brand-400/40 bg-brand-500/10">
+                <ChevronDown className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" />
+              </span>
+            </div>
+          </summary>
+          <div className="px-5 pb-5">
+            <QuickPaymentRegister rows={s.quickLoans} />
+          </div>
+        </details>
       </section>
     </div>
   );
