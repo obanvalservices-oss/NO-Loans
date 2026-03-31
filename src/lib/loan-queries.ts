@@ -106,6 +106,13 @@ export type EmployeeLoanSummaryRow = {
   total_paid_cents: number;
   remaining_balance_cents: number;
   status: "active" | "inactive";
+  loan_history: {
+    loan_id: number;
+    start_date: string;
+    status: string;
+    principal_cents: number;
+    remaining_cents: number;
+  }[];
 };
 
 export async function listEmployeesLoanSummary(
@@ -129,7 +136,10 @@ export async function listEmployeesLoanSummary(
     include: {
       company: { select: { name: true } },
       loans: {
+        orderBy: [{ start_date: "desc" }, { id: "desc" }],
         select: {
+          id: true,
+          start_date: true,
           status: true,
           principal_cents: true,
           total_owed_cents: true,
@@ -158,6 +168,19 @@ export async function listEmployeesLoanSummary(
       return sumLoans + loanRemaining;
     }, 0);
     const total_paid_cents = Math.max(0, total_owed_cents - remaining_balance_cents);
+    const loan_history = e.loans.map((l) => {
+      const remaining_cents = l.installments.reduce((sumInst, i) => {
+        if (i.status === "skipped") return sumInst;
+        return sumInst + Math.max(0, i.amount_due_cents - i.amount_paid_cents);
+      }, 0);
+      return {
+        loan_id: l.id,
+        start_date: l.start_date,
+        status: l.status,
+        principal_cents: l.principal_cents,
+        remaining_cents,
+      };
+    });
     return {
       id: e.id,
       full_name: e.full_name,
@@ -170,6 +193,7 @@ export async function listEmployeesLoanSummary(
       total_paid_cents,
       remaining_balance_cents,
       status: active_loan_count > 0 ? "active" : "inactive",
+      loan_history,
     };
   });
 }
