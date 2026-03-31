@@ -6,14 +6,24 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createClient(): PrismaClient {
-  const url = process.env.DATABASE_URL?.trim();
-  if (!url) {
+  const rawUrl = process.env.DATABASE_URL?.trim();
+  if (!rawUrl) {
     throw new Error(
       "DATABASE_URL is not set. Add it to `.env` or `.env.local` (PostgreSQL connection string).",
     );
   }
-  const q = url.indexOf("?");
-  const connectionString = q >= 0 ? url.slice(0, q) : url;
+
+  // Keep query params required by managed DB providers (e.g. pgbouncer),
+  // but drop `sslmode` because node-postgres + explicit `ssl` config can conflict.
+  let connectionString = rawUrl;
+  try {
+    const parsed = new URL(rawUrl);
+    parsed.searchParams.delete("sslmode");
+    connectionString = parsed.toString();
+  } catch {
+    connectionString = rawUrl;
+  }
+
   const adapter = new PrismaPg({
     connectionString,
     ssl: { rejectUnauthorized: false },
