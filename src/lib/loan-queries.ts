@@ -94,6 +94,86 @@ export async function listEmployeesTable(scope: CompanyScope): Promise<{
   }));
 }
 
+export type EmployeeLoanSummaryRow = {
+  id: number;
+  full_name: string;
+  email: string;
+  phone: string;
+  company_name: string;
+  loan_count: number;
+  active_loan_count: number;
+  total_borrowed_cents: number;
+  total_paid_cents: number;
+  remaining_balance_cents: number;
+  status: "active" | "inactive";
+};
+
+export async function listEmployeesLoanSummary(
+  scope: CompanyScope,
+  searchName?: string,
+): Promise<EmployeeLoanSummaryRow[]> {
+  const name = (searchName ?? "").trim();
+  const rows = await prisma.employee.findMany({
+    where: {
+      ...employeesWhere(scope),
+      ...(name
+        ? {
+            full_name: {
+              contains: name,
+              mode: "insensitive",
+            },
+          }
+        : {}),
+    },
+    orderBy: [{ full_name: "asc" }],
+    include: {
+      company: { select: { name: true } },
+      loans: {
+        select: {
+          status: true,
+          principal_cents: true,
+          total_owed_cents: true,
+          installments: {
+            select: {
+              status: true,
+              amount_due_cents: true,
+              amount_paid_cents: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return rows.map((e) => {
+    const loan_count = e.loans.length;
+    const active_loan_count = e.loans.filter((l) => l.status === "active").length;
+    const total_borrowed_cents = e.loans.reduce((s, l) => s + l.principal_cents, 0);
+    const total_owed_cents = e.loans.reduce((s, l) => s + l.total_owed_cents, 0);
+    const remaining_balance_cents = e.loans.reduce((sumLoans, l) => {
+      const loanRemaining = l.installments.reduce((sumInst, i) => {
+        if (i.status === "skipped") return sumInst;
+        return sumInst + Math.max(0, i.amount_due_cents - i.amount_paid_cents);
+      }, 0);
+      return sumLoans + loanRemaining;
+    }, 0);
+    const total_paid_cents = Math.max(0, total_owed_cents - remaining_balance_cents);
+    return {
+      id: e.id,
+      full_name: e.full_name,
+      email: e.email,
+      phone: e.phone,
+      company_name: e.company.name,
+      loan_count,
+      active_loan_count,
+      total_borrowed_cents,
+      total_paid_cents,
+      remaining_balance_cents,
+      status: active_loan_count > 0 ? "active" : "inactive",
+    };
+  });
+}
+
 export async function listCompaniesDetailed(scope: CompanyScope): Promise<{
   id: number;
   name: string;
