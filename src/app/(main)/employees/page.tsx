@@ -65,7 +65,7 @@ export default async function EmployeesPage({ searchParams }: Props) {
 
       {canManageEmployees ? (
         <>
-          <ButtonLink href={addHref} className="w-full justify-center">
+          <ButtonLink href={addHref} className="w-auto justify-start px-4 py-2 text-sm">
             {showAddForm ? "Hide add employee form" : "Add employee"}
           </ButtonLink>
           {showAddForm ? (
