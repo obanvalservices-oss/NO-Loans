@@ -54,7 +54,7 @@ export default async function WeeklyReportPage({ searchParams }: Props) {
   })}`;
 
   return (
-    <div className="space-y-10">
+    <div className="min-w-0 max-w-full space-y-10">
       <PageHeader
         className="no-print"
         title="Weekly payroll deductions"
@@ -96,6 +96,7 @@ export default async function WeeklyReportPage({ searchParams }: Props) {
 
       <WeeklyReportClient
         key={startISO}
+        weekStartISO={startISO}
         groups={groups}
         rangeLabel={rangeLabel}
         grandTotalAllCents={grandTotalAllCents}

@@ -9,6 +9,7 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
   }
   return (
     <motion.div
+      className="min-w-0 overflow-visible print:overflow-visible print:contain-none print:max-h-none print:h-auto"
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{

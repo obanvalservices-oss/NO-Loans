@@ -10,11 +10,12 @@ export function DataTableShell({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-2xl border border-white/10 bg-brand-900/35 shadow-lg shadow-black/25 backdrop-blur-md print:max-h-none print:overflow-visible print:border-slate-200 print:bg-white print:shadow-none",
+        /* No overflow-hidden on outer — it clips tall tables vertically. Rounded corners come from thead/tbody cells. */
+        "min-w-0 rounded-2xl border border-white/10 bg-brand-900/35 shadow-lg shadow-black/25 backdrop-blur-md print:max-h-none print:overflow-visible print:border-slate-200 print:bg-white print:shadow-none",
         className,
       )}
     >
-      <div className="overflow-x-auto print:max-h-none print:overflow-visible">
+      <div className="min-w-0 overflow-x-auto overflow-y-visible print:max-h-none print:overflow-visible">
         {children}
       </div>
     </div>

@@ -1,0 +1,104 @@
+/* Dedicated weekly print document — no app chrome; keep rules small and predictable */
+
+@media print {
+  @page {
+    size: letter landscape;
+    margin: 0.4in;
+  }
+
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+  }
+
+  .weekly-print-doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 9pt;
+    line-height: 1.35;
+    page-break-inside: auto;
+  }
+
+  .weekly-print-doc-table thead {
+    display: table-header-group;
+  }
+
+  .weekly-print-doc-table tbody {
+    display: table-row-group;
+  }
+
+  .weekly-print-doc-table th,
+  .weekly-print-doc-table td {
+    border: 1px solid #94a3b8;
+    padding: 4px 6px;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .weekly-print-doc-table th {
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
+    font-weight: 700;
+    text-align: left;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .weekly-print-doc-table td {
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .weekly-print-doc-table .weekly-print-doc-num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: normal;
+  }
+
+  .weekly-print-doc-table .weekly-print-doc-subtotal td {
+    background: #f1f5f9 !important;
+    font-weight: 600;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* Screen preview (same table) */
+.weekly-print-doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.weekly-print-doc-table th,
+.weekly-print-doc-table td {
+  border: 1px solid #cbd5e1;
+  padding: 6px 8px;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.weekly-print-doc-table th {
+  background: #e2e8f0;
+  color: #0f172a;
+  font-weight: 700;
+  text-align: left;
+}
+
+.weekly-print-doc-table .weekly-print-doc-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.weekly-print-doc-table .weekly-print-doc-subtotal td {
+  background: #f1f5f9;
+  font-weight: 600;
+}

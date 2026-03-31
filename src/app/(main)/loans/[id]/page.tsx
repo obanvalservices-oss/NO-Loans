@@ -3,11 +3,10 @@ import { ButtonLink } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableShell, Table, Td, Th } from "@/components/ui/data-table";
-import { getEffectiveNavFlags, getPermissionsForSession } from "@/lib/app-policies";
+import { getPermissionsForSession } from "@/lib/app-policies";
 import { getLoanDetail } from "@/lib/loan-queries";
 import { listInstallments } from "@/lib/loan-service";
 import { requireCompanyScope, requireSession } from "@/lib/require-auth";
-import { getSystemSettings } from "@/lib/system-settings";
 import { centsToDisplay } from "@/lib/money";
 import { ExternalLink, FileText, Pencil } from "lucide-react";
 import Link from "next/link";
@@ -54,10 +53,7 @@ export default async function LoanDetailPage({ params }: Props) {
 
   const session = await requireSession();
   const perms = await getPermissionsForSession(session);
-  const system = await getSystemSettings();
-  const nav = await getEffectiveNavFlags(session, system);
   const canManageLoans = perms.canManageLoans;
-  const showContract = nav.showContractActions;
 
   const scope = await requireCompanyScope();
   const detail = await getLoanDetail(id, scope);
