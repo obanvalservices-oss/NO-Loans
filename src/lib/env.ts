@@ -26,3 +26,18 @@ export function getAuthSecretBytes(): Uint8Array {
     "no-loans-dev-only-change-AUTH_SECRET-in-production";
   return new TextEncoder().encode(raw);
 }
+
+/**
+ * Canonical external URL for auth/callbacks behind proxies.
+ * Prefer NEXTAUTH_URL for platform compatibility; APP_URL is an alias.
+ */
+export function getAppUrl(): string | undefined {
+  const raw =
+    process.env.NEXTAUTH_URL ??
+    process.env.APP_URL ??
+    process.env.RAILWAY_PUBLIC_DOMAIN;
+  if (!raw) return undefined;
+  if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
+  // Railway often provides domain without protocol.
+  return `https://${raw}`;
+}

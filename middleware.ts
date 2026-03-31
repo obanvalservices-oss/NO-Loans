@@ -1,7 +1,12 @@
 import { jwtVerify } from "jose";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { getAuthSecret, SESSION_COOKIE } from "@/lib/auth-config";
+import {
+  getAuthSecret,
+  getSessionCookieName,
+  isSecureCookieEnabled,
+  SESSION_COOKIE_BASE,
+} from "@/lib/auth-config";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -10,7 +15,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get(SESSION_COOKIE)?.value;
+  const cookieName = getSessionCookieName();
+  const token =
+    request.cookies.get(cookieName)?.value ??
+    request.cookies.get(SESSION_COOKIE_BASE)?.value;
   if (!token) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -29,7 +37,21 @@ export async function middleware(request: NextRequest) {
     url.pathname = "/login";
     url.searchParams.set("from", pathname);
     const res = NextResponse.redirect(url);
-    res.cookies.delete(SESSION_COOKIE);
+    const secure = isSecureCookieEnabled();
+    res.cookies.set(cookieName, "", {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+      secure,
+    });
+    res.cookies.set(SESSION_COOKIE_BASE, "", {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+      secure,
+    });
     return res;
   }
 }

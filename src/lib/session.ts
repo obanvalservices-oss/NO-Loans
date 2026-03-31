@@ -1,6 +1,11 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import { getAuthSecret, SESSION_COOKIE } from "@/lib/auth-config";
+import {
+  getAuthSecret,
+  getSessionCookieName,
+  isSecureCookieEnabled,
+  SESSION_COOKIE_BASE,
+} from "@/lib/auth-config";
 import { prisma } from "@/lib/prisma";
 import type { CompanyScope } from "@/lib/company-scope";
 
@@ -42,30 +47,40 @@ export async function verifySessionToken(
 
 export async function getSession(): Promise<SessionPayload | null> {
   const jar = await cookies();
-  const raw = jar.get(SESSION_COOKIE)?.value;
+  const primary = getSessionCookieName();
+  const raw = jar.get(primary)?.value ?? jar.get(SESSION_COOKIE_BASE)?.value;
   if (!raw) return null;
   return verifySessionToken(raw);
 }
 
 export async function setSessionCookie(token: string): Promise<void> {
   const jar = await cookies();
-  jar.set(SESSION_COOKIE, token, {
+  jar.set(getSessionCookieName(), token, {
     httpOnly: true,
     sameSite: "lax",
     path: "/",
     maxAge: COOKIE_MAX_AGE_SEC,
-    secure: process.env.NODE_ENV === "production",
+    secure: isSecureCookieEnabled(),
   });
 }
 
 export async function clearSessionCookie(): Promise<void> {
   const jar = await cookies();
-  jar.set(SESSION_COOKIE, "", {
+  const secure = isSecureCookieEnabled();
+  jar.set(getSessionCookieName(), "", {
     httpOnly: true,
     sameSite: "lax",
     path: "/",
     maxAge: 0,
-    secure: process.env.NODE_ENV === "production",
+    secure,
+  });
+  // Clear legacy non-prefixed cookie name during rollout.
+  jar.set(SESSION_COOKIE_BASE, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+    secure,
   });
 }
 
