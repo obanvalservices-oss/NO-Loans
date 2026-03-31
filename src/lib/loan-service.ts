@@ -433,3 +433,224 @@ export async function getDashboardStats(scope: CompanyScope): Promise<{
     completedLoans,
   };
 }
+
+export type DashboardQuickLoan = {
+  loan_id: number;
+  employee_name: string;
+  company_name: string;
+  weekly_payment_cents: number;
+  current_installment_id: number | null;
+  current_due_date: string | null;
+  current_remaining_cents: number;
+};
+
+export type DashboardLatestLoan = {
+  loan_id: number;
+  employee_name: string;
+  company_name: string;
+  principal_cents: number;
+  status: string;
+  created_at: string;
+};
+
+export type DashboardAlertItem = {
+  loan_id: number;
+  installment_id: number;
+  employee_name: string;
+  company_name: string;
+  due_date: string;
+  status: "overdue" | "skipped";
+  amount_cents: number;
+};
+
+export async function getDashboardOverview(
+  scope: CompanyScope,
+  companyId?: number,
+): Promise<{
+  totalPrincipalCents: number;
+  totalOwedRemainingCents: number;
+  activeLoans: number;
+  completedLoans: number;
+  quickLoans: DashboardQuickLoan[];
+  latestLoans: DashboardLatestLoan[];
+  alerts: DashboardAlertItem[];
+}> {
+  const baseWhere = loansWhere(scope);
+  const scopedWhere = companyId
+    ? ({ ...baseWhere, company_id: companyId } as const)
+    : baseWhere;
+
+  const principal = await prisma.loan.aggregate({
+    where: {
+      ...scopedWhere,
+      status: { not: "void" },
+    },
+    _sum: { principal_cents: true },
+  });
+
+  const installmentRows = await prisma.installment.findMany({
+    where: {
+      loan: {
+        status: { not: "void" },
+        ...scopedWhere,
+      },
+    },
+    select: {
+      amount_due_cents: true,
+      amount_paid_cents: true,
+      status: true,
+    },
+  });
+
+  let remaining = 0;
+  for (const r of installmentRows) {
+    if (r.status === "skipped") continue;
+    const left = r.amount_due_cents - r.amount_paid_cents;
+    if (left > 0) remaining += left;
+  }
+
+  const counts = await prisma.loan.groupBy({
+    by: ["status"],
+    where: scopedWhere,
+    _count: { _all: true },
+  });
+
+  let activeLoans = 0;
+  let completedLoans = 0;
+  for (const c of counts) {
+    if (c.status === "active") activeLoans = c._count._all;
+    if (c.status === "completed") completedLoans = c._count._all;
+  }
+
+  const quickLoanRows = await prisma.loan.findMany({
+    where: {
+      ...scopedWhere,
+      status: "active",
+    },
+    orderBy: [{ id: "desc" }],
+    include: {
+      employee: { select: { full_name: true } },
+      company: { select: { name: true } },
+      installments: {
+        where: { status: { in: ["pending", "partial"] } },
+        orderBy: [{ due_date: "asc" }, { sequence: "asc" }],
+        take: 1,
+        select: {
+          id: true,
+          due_date: true,
+          amount_due_cents: true,
+          amount_paid_cents: true,
+        },
+      },
+    },
+  });
+
+  const quickLoans: DashboardQuickLoan[] = quickLoanRows.map((l) => {
+    const inst = l.installments[0];
+    const currentRemaining = inst
+      ? Math.max(0, inst.amount_due_cents - inst.amount_paid_cents)
+      : 0;
+    return {
+      loan_id: l.id,
+      employee_name: l.employee.full_name,
+      company_name: l.company.name,
+      weekly_payment_cents: l.weekly_payment_cents,
+      current_installment_id: inst?.id ?? null,
+      current_due_date: inst?.due_date ?? null,
+      current_remaining_cents: currentRemaining,
+    };
+  });
+
+  const latestLoanRows = await prisma.loan.findMany({
+    where: scopedWhere,
+    orderBy: [{ created_at: "desc" }],
+    take: 3,
+    include: {
+      employee: { select: { full_name: true } },
+      company: { select: { name: true } },
+    },
+  });
+
+  const latestLoans: DashboardLatestLoan[] = latestLoanRows.map((l) => ({
+    loan_id: l.id,
+    employee_name: l.employee.full_name,
+    company_name: l.company.name,
+    principal_cents: l.principal_cents,
+    status: l.status,
+    created_at: l.created_at.toISOString(),
+  }));
+
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const overdueRows = await prisma.installment.findMany({
+    where: {
+      due_date: { lt: todayISO },
+      status: { in: ["pending", "partial"] },
+      loan: {
+        ...scopedWhere,
+        status: "active",
+      },
+    },
+    orderBy: [{ due_date: "asc" }, { id: "asc" }],
+    take: 8,
+    include: {
+      loan: {
+        select: {
+          id: true,
+          employee: { select: { full_name: true } },
+          company: { select: { name: true } },
+        },
+      },
+    },
+  });
+
+  const skippedRows = await prisma.installment.findMany({
+    where: {
+      status: "skipped",
+      loan: {
+        ...scopedWhere,
+      },
+    },
+    orderBy: [{ due_date: "desc" }, { id: "desc" }],
+    take: 8,
+    include: {
+      loan: {
+        select: {
+          id: true,
+          employee: { select: { full_name: true } },
+          company: { select: { name: true } },
+        },
+      },
+    },
+  });
+
+  const alerts: DashboardAlertItem[] = [
+    ...overdueRows.map((r) => ({
+      loan_id: r.loan.id,
+      installment_id: r.id,
+      employee_name: r.loan.employee.full_name,
+      company_name: r.loan.company.name,
+      due_date: r.due_date,
+      status: "overdue" as const,
+      amount_cents: Math.max(0, r.amount_due_cents - r.amount_paid_cents),
+    })),
+    ...skippedRows.map((r) => ({
+      loan_id: r.loan.id,
+      installment_id: r.id,
+      employee_name: r.loan.employee.full_name,
+      company_name: r.loan.company.name,
+      due_date: r.due_date,
+      status: "skipped" as const,
+      amount_cents: r.amount_due_cents,
+    })),
+  ].slice(0, 10);
+
+  return {
+    totalPrincipalCents: principal._sum.principal_cents ?? 0,
+    totalOwedRemainingCents: remaining,
+    activeLoans,
+    completedLoans,
+    quickLoans,
+    latestLoans,
+    alerts,
+  };
+}
